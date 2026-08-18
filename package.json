@@ -1,0 +1,61 @@
+{
+  "name": "lp5-live-telemetry",
+  "version": "1.0.3",
+  "author": "Extrusion Therapy",
+  "description": "Read-only live telemetry monitor for LaserPecker LP5 jobs.",
+  "main": "main.js",
+  "type": "commonjs",
+  "scripts": {
+    "prepare-ui": "node prepare-ui.js",
+    "prepare-icons": "zsh scripts/build-icons.sh",
+    "start": "npm run prepare-ui && electron .",
+    "test": "npm run prepare-ui && node --test test/*.test.js",
+    "dist:mac": "npm run prepare-icons && npm run prepare-ui && electron-builder --mac dir --arm64 && zsh scripts/adhoc-sign-mac.sh 'dist/mac-arm64/LP5 Live Telemetry.app' && electron-builder --mac dmg zip --arm64 --prepackaged 'dist/mac-arm64/LP5 Live Telemetry.app'",
+    "dist:win": "npm run prepare-icons && npm run prepare-ui && electron-builder --win nsis portable --x64"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "43.2.0",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "therapy.extrusion.lp5livetelemetry",
+    "productName": "LP5 Live Telemetry",
+    "asar": true,
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "seed-slice-state.json",
+      "assets/icon.ico",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "identity": null,
+      "icon": "assets/icon.icns",
+      "target": ["dmg", "zip"]
+    },
+    "dmg": {
+      "title": "LP5 Live Telemetry ${version}",
+      "contents": [
+        { "x": 150, "y": 180 },
+        { "x": 500, "y": 180, "type": "link", "path": "/Applications" }
+      ]
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": ["nsis", "portable"]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowElevation": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
