@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+*.blockmap
+*.crt
+*.key
+*.p12
+*.pem
+
