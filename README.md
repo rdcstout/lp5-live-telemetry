@@ -10,7 +10,7 @@
 [![Download for Windows](https://img.shields.io/badge/Download-Windows-0078D4?style=for-the-badge&logo=windows11&logoColor=white)](https://github.com/rdcstout/lp5-live-telemetry/releases/download/v1.0.3/LP5.Live.Telemetry.Setup.1.0.3.Windows.x64.exe)
 
 [![Latest release](https://img.shields.io/github/v/release/rdcstout/lp5-live-telemetry?style=flat-square&label=latest%20release)](../../releases/latest)
-[![Source](https://img.shields.io/badge/source-private-555555?style=flat-square)](#source-and-support-policy)
+[![Source](https://img.shields.io/badge/source-available-555555?style=flat-square)](#development)
 [![Extrusion Therapy](https://img.shields.io/badge/Extrusion%20Therapy-website-d52b1e?style=flat-square)](https://extrusiontherapy.com/SoftwareLP5LiveTelemetry)
 
 </div>
@@ -46,9 +46,15 @@ The app does **not** control the laser, alter projects, pause or stop jobs, or c
 
 LP5 Live Telemetry is free. If it helps in your shop, you can optionally **[support future Extrusion Therapy tools](https://buy.stripe.com/fZu3cw2Mnfr0d7N3ws1kA00)**. The installers above remain available without payment.
 
-## Source and support policy
+## Development
 
-This repository is the public distribution point for official releases. The source is maintained privately. Issues are disabled, and unsolicited pull requests may be closed without review.
+This repository contains the application source, build instructions, issue tracker, and official downloads. See [DEVELOPMENT.md](DEVELOPMENT.md) for setup, tests, and packaging.
+
+## Support and contributions
+
+Report reproducible bugs or propose changes in the [issue tracker](https://github.com/rdcstout/lp5-live-telemetry/issues). Read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a pull request. Report security vulnerabilities privately using [SECURITY.md](SECURITY.md).
+
+No open-source license is currently specified.
 
 ## Independent utility
 
