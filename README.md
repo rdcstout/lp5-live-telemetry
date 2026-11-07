@@ -6,8 +6,8 @@
 
 [![LP5 Live Telemetry running on macOS](assets/lp5-live-telemetry-hero.png)](https://extrusiontherapy.com/SoftwareLP5LiveTelemetry)
 
-[![Download for macOS](https://img.shields.io/badge/Download-macOS-111111?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/rdcstout/lp5-live-telemetry/releases/download/v1.0.3/LP5.Live.Telemetry.1.0.3.Mac.arm64.dmg)
-[![Download for Windows](https://img.shields.io/badge/Download-Windows-0078D4?style=for-the-badge&logo=windows11&logoColor=white)](https://github.com/rdcstout/lp5-live-telemetry/releases/download/v1.0.3/LP5.Live.Telemetry.Setup.1.0.3.Windows.x64.exe)
+[![Download for macOS](https://img.shields.io/badge/Download-macOS-111111?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/rdcstout/lp5-live-telemetry/releases/latest/download/LP5-Live-Telemetry-macOS-arm64.dmg)
+[![Download for Windows](https://img.shields.io/badge/Download-Windows-0078D4?style=for-the-badge&logo=windows11&logoColor=white)](https://github.com/rdcstout/lp5-live-telemetry/releases/latest/download/LP5-Live-Telemetry-Windows-x64.exe)
 
 [![Latest release](https://img.shields.io/github/v/release/rdcstout/lp5-live-telemetry?style=flat-square&label=latest%20release)](../../releases/latest)
 [![Source](https://img.shields.io/badge/source-available-555555?style=flat-square)](#development)
@@ -19,8 +19,8 @@
 
 | Platform | System | Installer |
 | --- | --- | --- |
-| **macOS** | Apple silicon | **[Download `.dmg`](https://github.com/rdcstout/lp5-live-telemetry/releases/download/v1.0.3/LP5.Live.Telemetry.1.0.3.Mac.arm64.dmg)** |
-| **Windows** | 64-bit | **[Download `.exe`](https://github.com/rdcstout/lp5-live-telemetry/releases/download/v1.0.3/LP5.Live.Telemetry.Setup.1.0.3.Windows.x64.exe)** |
+| **macOS** | Apple silicon · signed and notarized | **[Download `.dmg`](https://github.com/rdcstout/lp5-live-telemetry/releases/latest/download/LP5-Live-Telemetry-macOS-arm64.dmg)** |
+| **Windows** | x64 · unsigned installer | **[Download `.exe`](https://github.com/rdcstout/lp5-live-telemetry/releases/latest/download/LP5-Live-Telemetry-Windows-x64.exe)** |
 
 Downloads are free and are never gated behind payment. You can also browse the [latest GitHub release](../../releases/latest).
 
@@ -31,16 +31,21 @@ LP5 Live Telemetry is a free, read-only desktop monitor created by [Extrusion Th
 ### At a glance
 
 - Overall job and current-slice progress
-- Current pass, commanded power, device speed, and reported temperature
+- Current pass, commanded power, device speed, and reported temperature when LDS supplies them
 - Active, paused, ready, transition, and idle states
 - Error, stop, safety-key, cover, and internal-connection status
 - Timestamp of the latest telemetry update
+- Manual update checks and optional quiet weekly checks
 
 ## How it works
 
 LaserPecker Design Space must remain open and connected to the LP5 while a job is running. LP5 Live Telemetry reads its live telemetry records and presents the useful machine information in a dedicated window.
 
 The app does **not** control the laser, alter projects, pause or stop jobs, or change machine settings.
+
+During depth-map and multi-slice operations, LDS can report scalar power and speed as zero even though the job uses per-slice command data. Version 1.0.4 displays **N/A** for those two fields instead of presenting the zero placeholders as real commands.
+
+See the [installation guide](docs/INSTALLATION.md) for platform details, removal, checksums, and update behavior.
 
 ## Support future tools
 

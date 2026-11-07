@@ -42,8 +42,8 @@ The `Source checks` workflow runs on pushes to `main`, pull requests, or a manua
 On macOS, from the repository root:
 
 ```sh
-npm run dist:mac -- --publish never
-npm run dist:win -- --publish never
+npm run dist:mac
+npm run dist:win
 ```
 
 Outputs are written to `dist/`: a macOS application directory, DMG and ZIP, and Windows NSIS and portable EXEs. `scripts/sign-mac.sh` signs the Mac app with the maintainer's Developer ID identity; the public DMG must also be submitted to Apple, accepted, stapled, and validated before publication. Windows packages are currently unsigned and must be identified that way. No Linux application package is defined.
