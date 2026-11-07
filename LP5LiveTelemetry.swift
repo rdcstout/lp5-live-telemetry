@@ -42,7 +42,11 @@ private let dashboardHTML = #"""
   .overall-fill { height: 100%; width: 0; background: linear-gradient(90deg,#42a5ff,#8ed2ff); transition: width .5s ease; }
   .ok { color: #74f6b4; }
   .bad { color: #ff6f7b; }
-  footer { color: #6e7c8f; font-size: 13px; margin-top: 15px; display: flex; justify-content: space-between; gap: 16px; }
+  footer { color: #6e7c8f; font-size: 13px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  .footer-actions { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+  .footer-action { appearance: none; border: 0; background: none; color: inherit; font: inherit; padding: 0; cursor: pointer; }
+  .footer-action:hover, .footer-action:focus-visible { color: #edf3fa; text-decoration: underline; }
+  .weekly { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -76,7 +80,7 @@ private let dashboardHTML = #"""
     </div>
     <div class="overall-track"><div class="overall-fill" id="overall-fill"></div></div>
   </section>
-  <footer><span id="timestamp">Waiting for telemetry…</span><span>Commanded telemetry—not optical wattage</span></footer>
+  <footer><span id="timestamp">Waiting for telemetry…</span><span class="footer-actions"><span>Commanded telemetry—not optical wattage</span><button class="footer-action" id="check-updates" type="button">Check for updates</button><label class="weekly"><input id="weekly-updates" type="checkbox" checked> Weekly checks</label></span></footer>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -91,11 +95,13 @@ const scaleInterface = () => {
 addEventListener('resize', scaleInterface);
 scaleInterface();
 const shown = value => (value === null || value === undefined) ? '—' : value;
+const batchCommandsUnavailable = d => d.slice_available && [5,255].includes(d.w_state) && d.laser === 0 && d.speed === 0;
 const stateName = code => ({1:'ACTIVE',2:'ACTIVE',3:'PAUSED / TRANSITION',4:'PAUSED',5:'ACTIVE',6:'TRANSITION',12:'READY',255:'IDLE'})[code] || `STATE ${code}`;
 const status = (id, value, good) => { const el=$(id); el.textContent=value; el.className='status-value '+(good?'ok':'bad'); };
 window.renderTelemetry = d => {
   $('state').textContent=stateName(d.w_state); $('state').className='state '+(([1,2,5].includes(d.w_state))?'ok':'');
-  $('pass').textContent=shown(d.print_times); $('power').textContent=shown(d.laser); $('speed').textContent=shown(d.speed); $('temp').textContent=shown(d.temp);
+  const commandsUnavailable = batchCommandsUnavailable(d);
+  $('pass').textContent=shown(d.print_times); $('power').textContent=commandsUnavailable?'N/A':shown(d.laser); $('speed').textContent=commandsUnavailable?'N/A':shown(d.speed); $('temp').textContent=shown(d.temp);
   status('error',d.error===0?'NONE':shown(d.error),d.error===0); status('stop',d.stop===0?'CLEAR':'SET',d.stop===0);
   status('safe',d.safe_key===1?'OK':'CHECK',d.safe_key===1); status('cover',d.cover===1?'OK':'CHECK',d.cover===1); status('usb',d.u_b_cnn===1?'OK':'CHECK',d.u_b_cnn===1);
   if (d.slice_available) {
@@ -111,6 +117,14 @@ window.renderTelemetry = d => {
   $('timestamp').textContent='Last update: '+d.timestamp;
   $('live').className='live'; $('live').lastElementChild.textContent='LIVE';
 };
+if (window.lp5Telemetry?.checkForUpdates) {
+  $('check-updates').addEventListener('click', () => window.lp5Telemetry.checkForUpdates());
+  window.lp5Telemetry.getUpdatePreferences().then(p => { $('weekly-updates').checked = p.automatic; });
+  $('weekly-updates').addEventListener('change', event => window.lp5Telemetry.setAutomaticUpdates(event.target.checked));
+} else {
+  $('check-updates').hidden = true;
+  $('weekly-updates').parentElement.hidden = true;
+}
 window.feedLost = message => {
   $('live').className='live bad'; $('live').lastElementChild.textContent='FEED LOST';
   $('timestamp').textContent=message || 'Waiting for LDS telemetry…';

@@ -1,6 +1,6 @@
 # Security policy
 
-Security fixes target the latest published stable release, currently 1.0.3. Older releases should be upgraded; backports are not promised. Reports about unreleased source should identify the affected commit.
+Security fixes target the latest published stable release. Older releases should be upgraded; backports are not promised. Reports about unreleased source should identify the affected commit.
 
 ## Report privately
 

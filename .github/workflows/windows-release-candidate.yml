@@ -1,0 +1,76 @@
+name: Windows release candidate
+'on':
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  package-and-test:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: Preserve repository line endings
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm test
+      - run: npm run dist:win
+      - name: Exercise upgrade, launch, relaunch, and removal
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $old = Join-Path $env:RUNNER_TEMP 'LP5-1.0.3.exe'
+          Invoke-WebRequest 'https://github.com/rdcstout/lp5-live-telemetry/releases/download/v1.0.3/LP5.Live.Telemetry.Setup.1.0.3.Windows.x64.exe' -OutFile $old
+          Start-Process -FilePath $old -ArgumentList '/S' -Wait
+          Start-Process -FilePath 'dist/LP5 Live Telemetry Setup 1.0.4.exe' -ArgumentList '/S' -Wait
+          $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Filter 'LP5 Live Telemetry.exe' -Recurse | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $exe) { throw 'Installed application executable was not found.' }
+          $installedVersion = (Get-Item $exe).VersionInfo.ProductVersion
+          if (-not $installedVersion.StartsWith('1.0.4')) { throw "Expected installed version 1.0.4, found $installedVersion." }
+          $logs = Join-Path $env:APPDATA 'laserpecker_design_spaces\logs\web\release-test'
+          New-Item -ItemType Directory -Force -Path $logs | Out-Null
+          @"
+          [2026-11-07 13:00:00] [info] [ 'WorkStatusResult', {
+            w_state: 5,
+            rate: 42,
+            laser: 0,
+            speed: 0,
+            error: 0,
+            name: 9001,
+            temp: 30,
+            print_times: 1,
+            u_b_cnn: 1,
+            stop: 0,
+            safe_key: 1,
+            cover: 1
+            }
+          ]
+          "@ | Set-Content -Encoding utf8 (Join-Path $logs 'info.log')
+          $first = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 8
+          if ($first.HasExited) { throw "First installed launch exited early with $($first.ExitCode)." }
+          taskkill /PID $first.Id /T /F | Out-Null
+          $second = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 8
+          if ($second.HasExited) { throw "Relaunch exited early with $($second.ExitCode)." }
+          taskkill /PID $second.Id /T /F | Out-Null
+          $uninstaller = Get-ChildItem (Split-Path $exe) -Filter 'Uninstall*.exe' | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $uninstaller) { throw 'Uninstaller was not found.' }
+          Start-Process -FilePath $uninstaller -ArgumentList '/S' -Wait
+          if (Test-Path $exe) { throw 'Application executable remained after uninstall.' }
+      - name: Record checksums
+        shell: pwsh
+        run: |
+          Get-FileHash 'dist/LP5 Live Telemetry Setup 1.0.4.exe' -Algorithm SHA256
+          Get-FileHash 'dist/LP5 Live Telemetry 1.0.4.exe' -Algorithm SHA256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lp5-live-telemetry-windows-1.0.4
+          if-no-files-found: error
+          path: |
+            dist/LP5 Live Telemetry Setup 1.0.4.exe
+            dist/LP5 Live Telemetry 1.0.4.exe

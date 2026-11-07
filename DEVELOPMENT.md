@@ -29,7 +29,7 @@ npm test
 npm audit --audit-level=high
 ```
 
-`npm test` regenerates the UI and runs the three existing layout, desktop-configuration, and icon tests. These tests do not exercise live hardware or prove packaged runtime behavior. Run `node node_modules/electron/install.js` before launching or packaging if dependencies were installed with `--ignore-scripts`.
+`npm test` regenerates the UI and runs the layout, desktop-configuration, update-policy, and icon tests. These tests do not exercise live hardware or prove packaged runtime behavior. Run `node node_modules/electron/install.js` before launching or packaging if dependencies were installed with `--ignore-scripts`.
 
 For UI or telemetry changes, also inspect the running app with controlled data and verify relevant behavior on the affected supported platforms. Keep real-device tests read-only and under the operator's control. Report unavailable platform/device checks as unverified.
 
@@ -46,7 +46,7 @@ npm run dist:mac -- --publish never
 npm run dist:win -- --publish never
 ```
 
-Outputs are written to `dist/`: a macOS application directory, DMG and ZIP, and Windows NSIS and portable EXEs. The supplied macOS script uses ad-hoc signing for local validation; that is not notarization or public distribution approval. No Linux application package is defined.
+Outputs are written to `dist/`: a macOS application directory, DMG and ZIP, and Windows NSIS and portable EXEs. `scripts/sign-mac.sh` signs the Mac app with the maintainer's Developer ID identity; the public DMG must also be submitted to Apple, accepted, stapled, and validated before publication. Windows packages are currently unsigned and must be identified that way. No Linux application package is defined.
 
 Merging source and publishing an application update are separate maintainer decisions. Before a release, verify the intended source revision and version, affected-platform runtime behavior, appropriate signing/notarization, installer assets, and checksums. Reuse valid CI evidence, but do not treat source checks as packaged-application acceptance. Uploads, release tags, and publication require maintainer authorization. Record the source revision used for each release; the version string alone does not establish that an existing installer matches the latest source.
 

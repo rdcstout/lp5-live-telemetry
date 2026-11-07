@@ -1,6 +1,6 @@
 {
   "name": "lp5-live-telemetry",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "author": "Extrusion Therapy",
   "description": "Read-only live telemetry monitor for LaserPecker LP5 jobs.",
   "main": "main.js",
@@ -10,7 +10,7 @@
     "prepare-icons": "zsh scripts/build-icons.sh",
     "start": "npm run prepare-ui && electron .",
     "test": "npm run prepare-ui && node --test test/*.test.js",
-    "dist:mac": "npm run prepare-icons && npm run prepare-ui && electron-builder --mac dir --arm64 && zsh scripts/adhoc-sign-mac.sh 'dist/mac-arm64/LP5 Live Telemetry.app' && electron-builder --mac dmg zip --arm64 --prepackaged 'dist/mac-arm64/LP5 Live Telemetry.app'",
+    "dist:mac": "npm run prepare-icons && npm run prepare-ui && electron-builder --mac dir --arm64 && zsh scripts/sign-mac.sh 'dist/mac-arm64/LP5 Live Telemetry.app' && electron-builder --mac dmg zip --arm64 --prepackaged 'dist/mac-arm64/LP5 Live Telemetry.app'",
     "dist:win": "npm run prepare-icons && npm run prepare-ui && electron-builder --win nsis portable --x64"
   },
   "dependencies": {},
@@ -25,6 +25,7 @@
     "files": [
       "main.js",
       "preload.js",
+      "updater.js",
       "index.html",
       "seed-slice-state.json",
       "assets/icon.ico",

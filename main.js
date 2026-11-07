@@ -1,7 +1,12 @@
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { compareVersions, eligibleStableRelease } = require('./updater');
+
+const RELEASES_API = 'https://api.github.com/repos/rdcstout/lp5-live-telemetry/releases/latest';
+const RELEASES_PAGE = 'https://github.com/rdcstout/lp5-live-telemetry/releases/latest';
+const UPDATE_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const FIELDS = ['w_state', 'rate', 'laser', 'speed', 'error', 'name', 'temp', 'print_times', 'u_b_cnn', 'stop', 'safe_key', 'cover'];
 const RECORD_PATTERN = /\[(\d{4}-\d{1,2}-\d{1,2} \d{2}:\d{2}:\d{2})\] \[info\]\s+\[\s*'WorkStatusResult',\s*\{([\s\S]*?)\n  \}\s*\]/g;
@@ -53,6 +58,59 @@ function loadSliceMap() {
 function saveSliceMap(values) {
   fs.mkdirSync(path.dirname(statePath()), { recursive: true });
   fs.writeFileSync(statePath(), `${JSON.stringify({ slice_by_job_id: values }, null, 2)}\n`);
+}
+
+function updateStatePath() {
+  return path.join(app.getPath('userData'), 'update-state.json');
+}
+
+function loadUpdateState() {
+  try { return { automatic: true, ...JSON.parse(fs.readFileSync(updateStatePath(), 'utf8')) }; }
+  catch (_) { return { automatic: true, lastAutomaticAttempt: 0, notifiedVersion: null }; }
+}
+
+function saveUpdateState(state) {
+  fs.mkdirSync(path.dirname(updateStatePath()), { recursive: true });
+  fs.writeFileSync(updateStatePath(), `${JSON.stringify(state, null, 2)}\n`);
+}
+
+async function latestEligibleRelease() {
+  const response = await fetch(RELEASES_API, {
+    headers: { Accept: 'application/vnd.github+json', 'User-Agent': `LP5-Live-Telemetry/${app.getVersion()}` },
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!response.ok) throw new Error(`GitHub returned ${response.status}.`);
+  return eligibleStableRelease(await response.json());
+}
+
+async function checkForUpdates(window, manual) {
+  const state = loadUpdateState();
+  if (!manual) {
+    if (!state.automatic || Date.now() - Number(state.lastAutomaticAttempt || 0) < UPDATE_INTERVAL_MS) return;
+    state.lastAutomaticAttempt = Date.now();
+    saveUpdateState(state);
+  }
+  try {
+    const release = await latestEligibleRelease();
+    const current = app.getVersion();
+    if (compareVersions(release.version, current) <= 0) {
+      if (manual) await dialog.showMessageBox(window, { type: 'info', title: 'LP5 Live Telemetry', message: `LP5 Live Telemetry ${current} is up to date.`, buttons: ['OK'] });
+      return { status: 'current', version: current };
+    }
+    if (!manual && state.notifiedVersion === release.version) return { status: 'dismissed', version: release.version };
+    const result = await dialog.showMessageBox(window, {
+      type: 'info', title: 'Update available', message: `LP5 Live Telemetry ${release.version} is available.`,
+      detail: `You are using ${current}. Downloading and installation remain under your control.`,
+      buttons: ['Download Update', 'Later'], defaultId: 0, cancelId: 1,
+    });
+    state.notifiedVersion = release.version;
+    saveUpdateState(state);
+    if (result.response === 0) await shell.openExternal(release.url || RELEASES_PAGE);
+    return { status: 'available', version: release.version };
+  } catch (error) {
+    if (manual) await dialog.showMessageBox(window, { type: 'warning', title: 'Unable to check for updates', message: 'LP5 Live Telemetry could not check for updates.', detail: error.message, buttons: ['OK'] });
+    return { status: 'unknown', message: error.message };
+  }
 }
 
 function allRecords(logDirectory) {
@@ -143,6 +201,9 @@ function createWindow() {
   window.webContents.once('did-finish-load', send);
   const timer = setInterval(send, 1000);
   window.on('closed', () => clearInterval(timer));
+  setTimeout(() => checkForUpdates(window, false), 15000);
+  const updateTimer = setInterval(() => checkForUpdates(window, false), 60 * 60 * 1000);
+  window.on('closed', () => clearInterval(updateTimer));
 }
 
 app.whenReady().then(() => {
@@ -151,6 +212,14 @@ app.whenReady().then(() => {
     catch (error) { process.stderr.write(`${error.message}\n`); app.exit(1); }
     return;
   }
+  ipcMain.handle('update:check', event => checkForUpdates(BrowserWindow.fromWebContents(event.sender), true));
+  ipcMain.handle('update:preferences', () => ({ automatic: loadUpdateState().automatic !== false }));
+  ipcMain.handle('update:set-automatic', (_event, automatic) => {
+    const state = loadUpdateState();
+    state.automatic = Boolean(automatic);
+    saveUpdateState(state);
+    return { automatic: state.automatic };
+  });
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
